@@ -1,0 +1,6 @@
+﻿services:
+  s3rabbitmongo:
+    image: s3rabbitmongo
+    build:
+      context: .
+      dockerfile: S3RabbitMongo/Dockerfile

@@ -18,7 +18,7 @@ public class Producer : BackgroundService
         {
             await _bus.Publish(new Message()
             {
-                RunId = "RunId",
+                RunId = Guid.NewGuid().ToString(),
                 Bucket = "Bucket",
                 Key = "Key",
                 ResultBucket = "ResultBucket",

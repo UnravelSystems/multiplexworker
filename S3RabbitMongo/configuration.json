@@ -1,0 +1,25 @@
+﻿{
+  "options": {
+    "mongo": {
+      "uri": "localhost",
+      "port": 27017,
+      "username": "admin",
+      "password": "password",
+      "database": "jobs"
+    }
+  },
+  "services": [
+    {
+      "serviceName": "mongo",
+      "dependsOnOptions": ["mongo"]
+    },
+    {
+      "serviceName": "job_manager",
+      "serviceType": "local"
+    },
+    {
+      "serviceName": "mass_transit",
+      "serviceType": "local"
+    }
+  ]
+}

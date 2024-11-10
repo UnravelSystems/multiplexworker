@@ -1,6 +1,12 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using CommandLine;
+using Microsoft.Extensions.Hosting;
 using MassTransit;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
+using S3RabbitMongo.Configuration;
+using S3RabbitMongo.Configuration.Database.External;
+using S3RabbitMongo.Job;
 using S3RabbitMongo.MassTransit;
 
 namespace S3RabbitMongo;
@@ -9,23 +15,17 @@ class Program
 {
     public static void Main(string[] args)
     {
-        ConfigureMassTransit(args).Build().Run();
+        Configure(args).Build().Run();
     }
 
-    private static IHostBuilder ConfigureMassTransit(string[] args)
+    public static IHostBuilder Configure(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
-                   .ConfigureServices(services =>
-                   {
-                       services.AddMassTransit(x =>
-                       {
-                           x.AddConsumer<MessageConsumer>();
-                           x.UsingInMemory((context, cfg) =>
-                           {
-                               cfg.ConfigureEndpoints(context);
-                           });
-                       });
-                       services.AddHostedService<Producer>();
-                   });
+            .ConfigureAppConfiguration((_, builder) => builder.AddJsonFile("D:\\Development\\multiplexworker\\S3RabbitMongo\\configuration.json"))
+            .ConfigureServices((ctx, services) =>
+            {
+                services.RegisterOptionsFromConfiguration(ctx.Configuration);
+                services.RegisterServicesFromConfiguration(ctx.Configuration);
+            });
     }
 }

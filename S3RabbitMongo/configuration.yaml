@@ -1,0 +1,31 @@
+﻿services:
+  externals:
+    mongo:
+      - object_type: "mongo"
+      - uri: "localhost"
+      - port: 27017
+      - username: "admin"
+      - password: "password"
+      - database: "jobs"
+    s3:
+      - uri: "localhost"
+      - port: 9001
+      - username: "admin"
+      - password: "password"
+    rabbit:
+      - uri: "localhost"
+      - port: 14000
+      - username: "admin"
+      - password: "password"
+  internal:
+    job_manager:
+      service: "mongo"
+      
+    work_bus:
+      - service: "rabbit"
+      - queue-in: ""
+      - queue-fault: ""
+        
+    datastore:
+      - service: "s3"
+  

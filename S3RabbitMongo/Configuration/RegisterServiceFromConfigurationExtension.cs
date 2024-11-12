@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using MassTransit;
+using MassTransit.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using S3RabbitMongo.Configuration.Interfaces;
@@ -37,10 +38,15 @@ public static class RegisterServiceFromConfigurationExtension
 
     static Type? GetInterfaceType(Type serviceType)
     {
-        ServiceConfigurationAttribute attribute = (ServiceConfigurationAttribute)serviceType.GetCustomAttribute(typeof(ServiceConfigurationAttribute));
+        ServiceConfigurationAttribute attribute = (ServiceConfigurationAttribute)serviceType.GetCustomAttribute(typeof(ServiceConfigurationAttribute))!;
         return attribute.ServiceInterface;
     }
-    
+
+    static string? GetServiceScope(Type serviceType)
+    {
+        ServiceConfigurationAttribute attribute = (ServiceConfigurationAttribute)serviceType.GetCustomAttribute(typeof(ServiceConfigurationAttribute))!;
+        return attribute.Scope;
+    }
     public static IServiceCollection RegisterServicesFromConfiguration(
         this IServiceCollection serviceCollection,
         IConfiguration configuration)
@@ -51,60 +57,106 @@ public static class RegisterServiceFromConfigurationExtension
         foreach (IConfigurationSection serviceSection in servicesSection.GetChildren())
         {
             string serviceName = serviceSection.GetValue<string>("serviceName")!;
-            if (!_serviceMap.TryGetValue(serviceName, out Dictionary<string, Type> serviceTypeMap))
-            {
-                throw new InvalidOperationException($"No service class found for '{serviceName}'.");
-            }
-            
             string serviceTypeName = serviceSection.GetValue<string>("serviceType", "default")!;
-            if (!serviceTypeMap.TryGetValue(serviceTypeName, out Type serviceType))
-            {
-                throw new InvalidOperationException($"No service type found for '{serviceName}/{serviceTypeName}'.");
-            }
+            Type serviceType = ValidateAndGetServiceType(serviceName, serviceTypeName);
             
-            IConfigurationSection dependsOn = serviceSection.GetSection("dependsOn");
-            if (dependsOn.Exists())
-            {
-                foreach (IConfigurationSection dependsOnSection in dependsOn.GetChildren())
-                {
-                    string? dependsOnServiceName = dependsOnSection.GetValue<string>("serviceName");
-                    if (!string.IsNullOrEmpty(dependsOnServiceName) && !seenServices.Contains(dependsOnServiceName))
-                    {
-                        throw new ConfigurationException($"Service '{serviceName}' depends on '{dependsOnServiceName}'.");
-                    }
-                }
-            }
-            
-            seenServices.Add(serviceName);
+            ValidateDependsOn(serviceSection, seenServices, serviceName);
 
             try
             {
-                // More complex type of service builder, call the appropriate method for configuring the service
+                // More complex type of service builder, call the appropriate method for configuring the services
                 if (typeof(ExternalServiceBuilder).IsAssignableFrom(serviceType))
                 {
-                    ExternalServiceBuilder? instance = (ExternalServiceBuilder)Activator.CreateInstance(serviceType)!;
+                    ExternalServiceBuilder instance = (ExternalServiceBuilder)Activator.CreateInstance(serviceType)!;
                     instance.ConfigureServices(serviceCollection, serviceSection);
                 }
                 else
                 {
                     // Simple service
                     Type? interfaceType = GetInterfaceType(serviceType);
-                    if (interfaceType != null)
+                    RegisterService(serviceCollection, serviceType, interfaceType, GetServiceScope(serviceType));
+                    /*if (interfaceType != null)
                     {
                         serviceCollection.AddSingleton(interfaceType, serviceType);
                     }
                     else
                     {
                         serviceCollection.AddSingleton(serviceType);
-                    }
+                    }*/
                 }
+                
+                IConfigurationSection optionsSection = serviceSection.GetSection("options");
+                if (optionsSection.Exists())
+                {
+                    RegisterOptionsFromConfigurationExtension.AddOptionsWithValidateOnStart(serviceCollection, optionsSection, $"{serviceName}.{serviceTypeName}");
+                }
+                /*typeof(OptionsConfigurationServiceCollectionExtensions)
+                    .GetMethod("Configure", 1, [typeof(IServiceCollection), typeof(string), typeof(IConfiguration)])
+                    ?.MakeGenericMethod(serviceType)*/
             }
             catch (Exception e)
             {
                 throw new InvalidOperationException($"The service '{serviceName}' is not registered.", e);
             }
+            
+            seenServices.Add(serviceName);
         }
 
         return serviceCollection;
+    }
+
+    private static void RegisterService(IServiceCollection serviceCollection, Type serviceType, Type? interfaceType, string? scope)
+    {
+        if (interfaceType == null)
+        {
+            interfaceType = serviceType;
+        }
+
+        switch (scope)
+        {
+            case "singleton":
+                serviceCollection.AddSingleton(interfaceType, serviceType);
+                break;
+            case "scoped":
+                serviceCollection.AddScoped(interfaceType, serviceType);
+                break;
+            case "transient":
+                serviceCollection.AddTransient(interfaceType, serviceType);
+                break;
+            default:
+                throw new InvalidOperationException($"The service-scope '{scope}' is not supported.");
+        }
+    }
+
+    private static Type ValidateAndGetServiceType(string serviceName, string serviceTypeName)
+    {
+        if (!_serviceMap.TryGetValue(serviceName, out Dictionary<string, Type> serviceTypeMap))
+        {
+            throw new InvalidOperationException($"No service class found for '{serviceName}'.");
+        }
+            
+        if (!serviceTypeMap.TryGetValue(serviceTypeName, out Type serviceType))
+        {
+            throw new InvalidOperationException($"No service type found for '{serviceName}/{serviceTypeName}'.");
+        }
+
+        return serviceType;
+    }
+
+    private static void ValidateDependsOn(IConfiguration serviceConfiguration, HashSet<string> seenServices, String serviceName)
+    {
+            
+        IConfigurationSection dependsOn = serviceConfiguration.GetSection("dependsOn");
+        if (dependsOn.Exists())
+        {
+            foreach (IConfigurationSection dependsOnSection in dependsOn.GetChildren())
+            {
+                string? dependsOnServiceName = dependsOnSection.GetValue<string>("serviceName");
+                if (!string.IsNullOrEmpty(dependsOnServiceName) && !seenServices.Contains(dependsOnServiceName))
+                {
+                    throw new ConfigurationException($"Service '{serviceName}' depends on '{dependsOnServiceName}'.");
+                }
+            }
+        }
     }
 }

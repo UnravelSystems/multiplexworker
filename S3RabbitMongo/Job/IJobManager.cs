@@ -2,7 +2,8 @@
 
 public interface IJobManager
 {
-    public long IncrementTask(String jobId);
-    public long DecrementTask(String jobId);
-    public bool RemoveTask(String jobId);
+    public long AddTask(string jobId, string taskId);
+    public long RemoveTask(string jobId, string taskId);
+    public bool IsJobFinished(string jobId);
+    public bool FinishJob(string jobId);
 }

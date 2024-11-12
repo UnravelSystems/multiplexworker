@@ -2,6 +2,7 @@
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using S3RabbitMongo.Configuration.Interfaces;
 
 namespace S3RabbitMongo.Configuration;
@@ -16,7 +17,7 @@ public static class RegisterOptionsFromConfigurationExtension
         {
             foreach (var type in GetExternalServiceConfigurations(assembly))
             {
-                ConfigurationOptionsAttribute attribute = (ConfigurationOptionsAttribute)type.GetCustomAttribute(typeof(ConfigurationOptionsAttribute));
+                OptionsConfigurationAttribute attribute = (OptionsConfigurationAttribute)type.GetCustomAttribute(typeof(OptionsConfigurationAttribute));
                 _optionsMapping.Add(attribute.ServiceName, type);
             }
         }
@@ -24,7 +25,7 @@ public static class RegisterOptionsFromConfigurationExtension
     
     static IEnumerable<Type> GetExternalServiceConfigurations(Assembly assembly) {
         foreach(Type type in assembly.GetTypes()) {
-            if (type.GetCustomAttributes(typeof(ConfigurationOptionsAttribute), true).Length > 0) {
+            if (type.GetCustomAttributes(typeof(OptionsConfigurationAttribute), true).Length > 0) {
                 yield return type;
             }
         }
@@ -39,26 +40,40 @@ public static class RegisterOptionsFromConfigurationExtension
         foreach (IConfigurationSection optionSection in optionsSection.GetChildren())
         {
             string optionTypeName = optionSection.Key;
-            if (!_optionsMapping.TryGetValue(optionTypeName, out Type optionType))
-            {
-                throw new InvalidOperationException($"The service '{optionTypeName}' is not registered.");
-            }
-            
-            try
-            {
-                // Because Configure is a generic function and we need to register this as the specific generic 
-                // option type saved from the attributes we need to use reflection to register the configuration
-                typeof(OptionsConfigurationServiceCollectionExtensions)
-                    .GetMethod("Configure", [typeof(IServiceCollection), typeof(IConfiguration)])
-                    ?.MakeGenericMethod(optionType)
-                    .Invoke(serviceCollection, [serviceCollection, optionSection]);
-            }
-            catch(Exception ex)
-            {
-                throw new InvalidOperationException($"The service '{optionTypeName}' is not registered.", ex);
-            }
+            AddOptionsWithValidateOnStart(serviceCollection, optionSection, optionTypeName);
         }
 
         return serviceCollection;
+    }
+
+    public static void AddOptionsWithValidateOnStart(IServiceCollection serviceCollection, IConfigurationSection configuration, string optionName)
+    {
+        if (!_optionsMapping.TryGetValue(optionName, out Type optionType))
+        {
+            throw new InvalidOperationException($"The service '{optionName}' is not registered.");
+        }
+        
+        try
+        {
+            var optionsBuilder = typeof(OptionsServiceCollectionExtensions)
+                .GetMethod("AddOptionsWithValidateOnStart", 1, [typeof(IServiceCollection), typeof(string)])
+                ?.MakeGenericMethod(optionType)
+                .Invoke(serviceCollection, [serviceCollection, null]);
+                
+            optionsBuilder = typeof(OptionsBuilderConfigurationExtensions)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(x => x.Name == "Bind" && x.GetParameters().Length == 2)
+                ?.MakeGenericMethod(optionType)
+                .Invoke(optionsBuilder, [ optionsBuilder, configuration ]);
+                
+            _ = typeof(OptionsBuilderDataAnnotationsExtensions)
+                .GetMethod("ValidateDataAnnotations")
+                ?.MakeGenericMethod(optionType)
+                .Invoke(optionsBuilder, [ optionsBuilder ]);
+        }
+        catch(Exception ex)
+        {
+            throw new InvalidOperationException($"The service '{optionName}' is not registered.", ex);
+        }
     }
 }

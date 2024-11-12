@@ -7,4 +7,5 @@ public class ServiceConfigurationAttribute: Attribute
     public string? ServiceName { get; set; }
 
     public Type? ServiceInterface { get; set; }
+    public string? Scope { get; set; } = "singleton";
 }

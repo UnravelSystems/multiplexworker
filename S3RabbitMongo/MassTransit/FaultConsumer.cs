@@ -19,10 +19,10 @@ public class FaultConsumer : IConsumer<Fault<Message>>
     {
         _logger.LogInformation("Fault consumer received: {@context}", context);
         Message message = context.Message.Message;
-        long activeJobs = _jobManager.DecrementTask(message.RunId);
-        if (activeJobs == 0)
+        long activeJobs = _jobManager.RemoveTask(message.RunId, null);
+        if (_jobManager.IsJobFinished(message.RunId))
         {
-            _logger.LogInformation($"Job {message.RunId} has finished through fault: {_jobManager.RemoveTask(message.RunId)}");
+            _logger.LogInformation($"Job {message.RunId} has finished through fault: {_jobManager.FinishJob(message.RunId)}");
         }
     }
 }

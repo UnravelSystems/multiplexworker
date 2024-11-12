@@ -14,6 +14,7 @@ public class Producer : BackgroundService
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var dict = File.ReadAllText("D:\\Development\\multiplexworker\\S3RabbitMongo\\data.json");
         while (!stoppingToken.IsCancellationRequested)
         {
             await _bus.Publish(new Message()
@@ -22,10 +23,10 @@ public class Producer : BackgroundService
                 Bucket = "Bucket",
                 Key = "Key",
                 ResultBucket = "ResultBucket",
-                MessageData = "1/2/3/4/5"
+                MessageData = dict
             });
             
-            await Task.Delay(1000, stoppingToken);
+            await Task.Delay(100000000, stoppingToken);
         }
     }
 }

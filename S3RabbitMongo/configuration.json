@@ -44,7 +44,15 @@
     },
     {
       "serviceName": "mass_transit",
-      "serviceType": "local"
+      "serviceType": "rabbit",
+      "options": {
+        "host": "test",
+        "username": "admin",
+        "password": "password",
+        "inqueue": "in",
+        "faultqueue": "fault",
+        "outqueue": "out"
+      }
     }
   ]
 }

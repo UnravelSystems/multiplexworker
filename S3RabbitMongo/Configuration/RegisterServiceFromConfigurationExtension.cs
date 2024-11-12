@@ -64,6 +64,12 @@ public static class RegisterServiceFromConfigurationExtension
 
             try
             {
+                IConfigurationSection optionsSection = serviceSection.GetSection("options");
+                if (optionsSection.Exists())
+                {
+                    RegisterOptionsFromConfigurationExtension.AddOptionsWithValidateOnStart(serviceCollection, optionsSection, $"{serviceName}.{serviceTypeName}");
+                }
+                
                 // More complex type of service builder, call the appropriate method for configuring the services
                 if (typeof(ExternalServiceBuilder).IsAssignableFrom(serviceType))
                 {
@@ -75,31 +81,14 @@ public static class RegisterServiceFromConfigurationExtension
                     // Simple service
                     Type? interfaceType = GetInterfaceType(serviceType);
                     RegisterService(serviceCollection, serviceType, interfaceType, GetServiceScope(serviceType));
-                    /*if (interfaceType != null)
-                    {
-                        serviceCollection.AddSingleton(interfaceType, serviceType);
-                    }
-                    else
-                    {
-                        serviceCollection.AddSingleton(serviceType);
-                    }*/
                 }
-                
-                IConfigurationSection optionsSection = serviceSection.GetSection("options");
-                if (optionsSection.Exists())
-                {
-                    RegisterOptionsFromConfigurationExtension.AddOptionsWithValidateOnStart(serviceCollection, optionsSection, $"{serviceName}.{serviceTypeName}");
-                }
-                /*typeof(OptionsConfigurationServiceCollectionExtensions)
-                    .GetMethod("Configure", 1, [typeof(IServiceCollection), typeof(string), typeof(IConfiguration)])
-                    ?.MakeGenericMethod(serviceType)*/
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException($"The service '{serviceName}' is not registered.", e);
+                throw new InvalidOperationException($"Failed to register service: '{serviceName}'", e);
             }
             
-            seenServices.Add(serviceName);
+            seenServices.Add(serviceName.ToLower());
         }
 
         return serviceCollection;
@@ -151,10 +140,10 @@ public static class RegisterServiceFromConfigurationExtension
         {
             foreach (IConfigurationSection dependsOnSection in dependsOn.GetChildren())
             {
-                string? dependsOnServiceName = dependsOnSection.GetValue<string>("serviceName");
-                if (!string.IsNullOrEmpty(dependsOnServiceName) && !seenServices.Contains(dependsOnServiceName))
+                string? dependsOnServiceName = dependsOnSection.Value;
+                if (!string.IsNullOrEmpty(dependsOnServiceName) && !seenServices.Contains(dependsOnServiceName.ToLower()))
                 {
-                    throw new ConfigurationException($"Service '{serviceName}' depends on '{dependsOnServiceName}'.");
+                    throw new ConfigurationException($"Missing Dependency: Service '{serviceName}' depends on '{dependsOnServiceName}'.");
                 }
             }
         }

@@ -24,7 +24,7 @@ class Program
     public static IHostBuilder Configure(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((_, builder) => builder.AddJsonFile("D:\\Development\\multiplexworker\\S3RabbitMongo\\configuration.json"))
+            .ConfigureAppConfiguration((_, builder) => builder.AddJsonFile("D:\\Development\\multiplexworker\\S3RabbitMongo\\configuration.local.json"))
             .ConfigureServices((ctx, services) =>
             {
                 services.RegisterOptionsFromConfiguration(ctx.Configuration);

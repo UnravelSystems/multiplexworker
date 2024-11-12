@@ -1,19 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
-using S3RabbitMongo.Database;
+using S3RabbitMongo.Configuration;
+using S3RabbitMongo.Configuration.Database.External;
 
-namespace S3RabbitMongo.Configuration.Database.External
+namespace S3RabbitMongo.Database.Mongo
 {
-    [OptionsConfiguration(ServiceName = "document_store.mongo")]
-    public class MongoDocumentStoreOptions
-    {
-        public string Collection { get; set; }
-        public string Database { get; set; }
-    }
-
     public class MongoDocument : Document
     {
         public ObjectId Id { get; set; }

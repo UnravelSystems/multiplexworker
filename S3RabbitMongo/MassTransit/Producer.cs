@@ -5,7 +5,7 @@ namespace S3RabbitMongo.MassTransit;
 
 public class Producer : BackgroundService
 {
-    readonly IBus _bus;
+    private readonly IBus _bus;
 
     public Producer(IBus bus)
     {
@@ -14,7 +14,7 @@ public class Producer : BackgroundService
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var dict = File.ReadAllText("D:\\Development\\multiplexworker\\S3RabbitMongo\\data.json");
+        var dict = await File.ReadAllTextAsync(@"D:\Development\multiplexworker\S3RabbitMongo\data.json", stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
             await _bus.Publish(new Message()
@@ -24,9 +24,9 @@ public class Producer : BackgroundService
                 Key = "Key",
                 ResultBucket = "ResultBucket",
                 MessageData = dict
-            });
+            }, stoppingToken);
             
-            await Task.Delay(100000000, stoppingToken);
+            await Task.Delay(1000, stoppingToken);
         }
     }
 }

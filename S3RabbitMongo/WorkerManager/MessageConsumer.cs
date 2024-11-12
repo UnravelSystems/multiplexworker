@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using S3RabbitMongo.Configuration.Database.External;
 using S3RabbitMongo.Configuration.Datastore;
 using S3RabbitMongo.Database;
+using S3RabbitMongo.Database.Mongo;
 using S3RabbitMongo.Job;
 
 namespace S3RabbitMongo.MassTransit

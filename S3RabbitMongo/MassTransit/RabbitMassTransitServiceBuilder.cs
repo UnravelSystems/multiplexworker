@@ -1,24 +1,63 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using S3RabbitMongo.Configuration;
 using S3RabbitMongo.Configuration.Interfaces;
-using S3RabbitMongo.Job;
-using S3RabbitMongo.MassTransit;
+using S3RabbitMongo.Configuration.ServiceBus;
 
-namespace S3RabbitMongo.Configuration.ServiceBus;
+namespace S3RabbitMongo.MassTransit;
 
-[ServiceConfiguration(ServiceName = "mass_transit", ServiceType = "local")]
-public class LocalMassTransitServiceBuilder : ExternalServiceBuilder
+[ServiceConfiguration(ServiceName = "mass_transit", ServiceType = "rabbit")]
+public class RabbitMassTransitServiceBuilder : ExternalServiceBuilder
 {
     public override void ConfigureServices(IServiceCollection serviceCollection, IConfigurationSection configuration)
     {
         serviceCollection.AddMassTransit(x =>
         {
-            x.AddConsumer<MessageConsumer>();
-            x.AddConsumer<FaultConsumer>();
-            x.UsingInMemory((context, cfg) =>
+            IServiceProvider sp = x.BuildServiceProvider();
+            IOptions<RabbitMQWorkerOptions> options = sp.GetService<IOptions<RabbitMQWorkerOptions>>();
+            if (options is null)
             {
-                cfg.ConfigureEndpoints(context);
+                throw new InvalidOperationException("RabbitMQ worker options are missing.");
+            }
+            
+            RabbitMQWorkerOptions rabbitOptions = options.Value;
+            x.AddConsumer<MessageConsumer>().Endpoint(e =>
+            {
+                e.Name = rabbitOptions.InQueue;
+            });
+            x.AddConsumer<FaultConsumer>().Endpoint(e =>
+            {
+                e.Name = rabbitOptions.FaultQueue;
+            });
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                string hostAddress = $"rabbitmq://{rabbitOptions.Host}:{rabbitOptions.Port}";
+                cfg.Host(hostAddress, h =>
+                {
+                    h.Username(rabbitOptions.Username);
+                    h.Password(rabbitOptions.Password);
+                });
+                
+                ((IReceiveConfigurator)cfg).ReceiveEndpoint(rabbitOptions.InQueue, configureEndpoint =>
+                {
+                    configureEndpoint.Consumer<MessageConsumer>(context);
+                    if (configureEndpoint is IRabbitMqReceiveEndpointConfigurator r)
+                    {
+                        r.Durable = true;
+                    }
+                });
+                
+                ((IReceiveConfigurator)cfg).ReceiveEndpoint(rabbitOptions.FaultQueue, configureEndpoint =>
+                {
+                    configureEndpoint.Consumer<FaultConsumer>(context);
+                    if (configureEndpoint is IRabbitMqReceiveEndpointConfigurator r)
+                    {
+                        r.Durable = true;
+                    }
+                });
+                //cfg.ConfigureEndpoints(context);
             });
         });
                        

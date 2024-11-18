@@ -84,10 +84,10 @@ namespace S3RabbitMongo.Job
 
         public bool IsJobFinished(string jobId)
         {
-            Job job = _collection.FindSync(Builders<Job>.Filter.Where(j => j.JobId == jobId)).First();
+            Job job = _collection.FindSync(Builders<Job>.Filter.Where(j => j.JobId == jobId)).FirstOrDefault();
             if (job == null)
             {
-                throw new Exception($"Job {jobId} not found");
+                return true;
             }
             
             return job.CurrentTasks == 0;

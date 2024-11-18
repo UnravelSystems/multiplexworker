@@ -1,13 +1,13 @@
 ﻿using Amazon.S3;
-using Amazon.S3.Model;
 using Amazon.S3.Transfer;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using S3RabbitMongo.Configuration;
+using S3RabbitMongo.Configuration.Datastore;
 
-namespace S3RabbitMongo.Configuration.Datastore;
+namespace S3RabbitMongo.Datastore.S3;
 
 [ServiceConfiguration(ServiceType = "S3", ServiceName = "datastore", ServiceInterface = typeof(IDatastore))]
-public class S3Datastore : IDatastore
+public class S3Datastore : AbstractDatastore
 {
     private readonly ILogger<S3Datastore> _logger;
     private readonly IAmazonS3 _amazonS3;
@@ -16,8 +16,8 @@ public class S3Datastore : IDatastore
         _logger = logger;
         _amazonS3 = amazonS3;
     }
-    
-    public void StoreFile(string bucket, string key, Stream inStream)
+
+    protected override FileStoreInfo Store(string bucket, string key, DatastoreStream inStream)
     {
         var fileTransferUtility =
             new TransferUtility(_amazonS3);
@@ -28,24 +28,22 @@ public class S3Datastore : IDatastore
             Key = key,
             InputStream = inStream
         };
-        
+
         fileTransferUtility.Upload(req);
-    }
 
-    public void StoreFile(string bucket, string key, string inFile)
-    {
-        using (var fileStream = File.OpenRead(inFile))
+        return new FileStoreInfo
         {
-            StoreFile(bucket, key, fileStream);
-        }
+            Offset = 0,
+            Path = $"{bucket}:/{key}",
+        };
     }
 
-    public Stream GetFile(string bucket, string key)
+    public override Stream GetFile(string bucket, string key)
     {
         throw new NotImplementedException();
     }
 
-    public void GetFile(string bucket, string key, string outFile)
+    public override void GetFile(string bucket, string key, string outFile)
     {
         throw new NotImplementedException();
     }

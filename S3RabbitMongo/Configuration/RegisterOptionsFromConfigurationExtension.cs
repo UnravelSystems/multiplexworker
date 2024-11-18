@@ -39,8 +39,7 @@ public static class RegisterOptionsFromConfigurationExtension
         
         foreach (IConfigurationSection optionSection in optionsSection.GetChildren())
         {
-            string optionTypeName = optionSection.Key;
-            AddOptionsWithValidateOnStart(serviceCollection, optionSection, optionTypeName);
+            AddOptionsWithValidateOnStart(serviceCollection, optionSection, optionSection.Key);
         }
 
         return serviceCollection;
@@ -48,7 +47,12 @@ public static class RegisterOptionsFromConfigurationExtension
 
     public static void AddOptionsWithValidateOnStart(IServiceCollection serviceCollection, IConfigurationSection configuration, string optionName)
     {
-        if (!_optionsMapping.TryGetValue(optionName, out Type optionType))
+        if (string.IsNullOrEmpty(optionName))
+        {
+            throw new ArgumentNullException(nameof(optionName));
+        }
+        
+        if (!_optionsMapping.TryGetValue(optionName, out Type? optionType))
         {
             throw new InvalidOperationException($"The service '{optionName}' is not registered.");
         }
@@ -63,7 +67,7 @@ public static class RegisterOptionsFromConfigurationExtension
             optionsBuilder = typeof(OptionsBuilderConfigurationExtensions)
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .First(x => x.Name == "Bind" && x.GetParameters().Length == 2)
-                ?.MakeGenericMethod(optionType)
+                .MakeGenericMethod(optionType)
                 .Invoke(optionsBuilder, [ optionsBuilder, configuration ]);
                 
             _ = typeof(OptionsBuilderDataAnnotationsExtensions)

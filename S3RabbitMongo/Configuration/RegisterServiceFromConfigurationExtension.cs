@@ -42,17 +42,17 @@ public static class RegisterServiceFromConfigurationExtension
         return attribute.ServiceInterface;
     }
 
-    static string? GetServiceScope(Type serviceType)
+    static ServiceLifetime GetServiceScope(Type serviceType)
     {
         ServiceConfigurationAttribute attribute = (ServiceConfigurationAttribute)serviceType.GetCustomAttribute(typeof(ServiceConfigurationAttribute))!;
         return attribute.Scope;
     }
+    
     public static IServiceCollection RegisterServicesFromConfiguration(
         this IServiceCollection serviceCollection,
         IConfiguration configuration)
     {
         IConfigurationSection servicesSection = configuration.GetSection("services");
-        
         HashSet<string> seenServices = new();
         foreach (IConfigurationSection serviceSection in servicesSection.GetChildren())
         {
@@ -94,26 +94,34 @@ public static class RegisterServiceFromConfigurationExtension
         return serviceCollection;
     }
 
-    private static void RegisterService(IServiceCollection serviceCollection, Type serviceType, Type? interfaceType, string? scope)
+    private static void RegisterService(IServiceCollection serviceCollection, Type serviceType, Type? interfaceType, ServiceLifetime scope)
     {
+        Type[] interfaces;
         if (interfaceType == null)
         {
-            interfaceType = serviceType;
+            interfaces = serviceType.GetInterfaces();
+        }
+        else
+        {
+            interfaces = [interfaceType];
         }
 
-        switch (scope)
+        foreach (Type @interface in interfaces)
         {
-            case "singleton":
-                serviceCollection.AddSingleton(interfaceType, serviceType);
-                break;
-            case "scoped":
-                serviceCollection.AddScoped(interfaceType, serviceType);
-                break;
-            case "transient":
-                serviceCollection.AddTransient(interfaceType, serviceType);
-                break;
-            default:
-                throw new InvalidOperationException($"The service-scope '{scope}' is not supported.");
+            switch (scope)
+            {
+                case ServiceLifetime.Singleton:
+                    serviceCollection.AddSingleton(@interface, serviceType);
+                    break;
+                case ServiceLifetime.Scoped:
+                    serviceCollection.AddScoped(@interface, serviceType);
+                    break;
+                case ServiceLifetime.Transient:
+                    serviceCollection.AddTransient(@interface, serviceType);
+                    break;
+                default:
+                    throw new InvalidOperationException($"The service-scope '{scope}' is not supported.");
+            }
         }
     }
 

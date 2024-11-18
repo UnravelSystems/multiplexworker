@@ -1,4 +1,6 @@
-﻿using CommandLine;
+﻿using System.Security.Cryptography;
+using System.Text;
+using CommandLine;
 using Microsoft.Extensions.Hosting;
 using MassTransit;
 using MassTransit.Configuration;
@@ -24,11 +26,12 @@ class Program
     public static IHostBuilder Configure(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((_, builder) => builder.AddJsonFile("D:\\Development\\multiplexworker\\S3RabbitMongo\\configuration.local.json"))
+            .ConfigureAppConfiguration((_, builder) => builder.AddJsonFile("D:\\Development\\multiplexworker\\S3RabbitMongo\\configuration.json"))
             .ConfigureServices((ctx, services) =>
             {
                 services.RegisterOptionsFromConfiguration(ctx.Configuration);
                 services.RegisterServicesFromConfiguration(ctx.Configuration);
+                services.RegisterWorkers(ctx.Configuration);
             });
     }
 }

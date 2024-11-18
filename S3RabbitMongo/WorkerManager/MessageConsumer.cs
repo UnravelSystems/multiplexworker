@@ -5,7 +5,9 @@ using S3RabbitMongo.Configuration.Database.External;
 using S3RabbitMongo.Configuration.Datastore;
 using S3RabbitMongo.Database;
 using S3RabbitMongo.Database.Mongo;
+using S3RabbitMongo.Datastore;
 using S3RabbitMongo.Job;
+using S3RabbitMongo.Worker;
 
 namespace S3RabbitMongo.MassTransit
 {
@@ -24,21 +26,29 @@ namespace S3RabbitMongo.MassTransit
         }
     }
     
-    public class MessageConsumer : IConsumer<Message>, IWorkerManager
+    public class MessageConsumer : IConsumer<Message>, IWorkerManager<Message>
     {
         private readonly ILogger<MessageConsumer> _logger;
         private readonly IBus _bus;
         private readonly IJobManager _jobManager;
         private readonly IDatastore _datastore;
-        private readonly IDocumentStore _documentStore;
+        private readonly IDocumentStore<Document<string, string>> _documentStore;
+        private readonly IEnumerable<IWorker<Message>> _workers;
 
-        public MessageConsumer(ILogger<MessageConsumer> logger, IBus bus, IJobManager jobManager, IDatastore datastore, IDocumentStore documentStore)
+        public MessageConsumer(ILogger<MessageConsumer> logger, IBus bus, IJobManager jobManager, IDatastore datastore, IDocumentStore<Document<string, string>> documentStore, IEnumerable<IWorker<Message>> workers)
         {
             _logger = logger;
             _bus = bus;
             _jobManager = jobManager;
             _datastore = datastore;
             _documentStore = documentStore;
+            _workers = workers;
+            
+            // TODO decouple things so that there is no circular dependency
+            foreach (var worker in workers)
+            {
+                worker.SetWorkerManager(this);
+            }
         }
         
         public Task Consume(ConsumeContext<Message> context)
@@ -54,7 +64,7 @@ namespace S3RabbitMongo.MassTransit
             long activeJobs = _jobManager.RemoveTask(jobId, null);
             if (_jobManager.IsJobFinished(jobId))
             {
-                _logger.LogInformation($"Job {jobId} has finished | removed={_jobManager.FinishJob(message.RunId)}");
+                _logger.LogInformation($"Job {jobId} has finished | removed={_jobManager.FinishJob(message.RunId)} {Thread.CurrentThread.ManagedThreadId}");
             }
             
             return Task.CompletedTask;
@@ -63,42 +73,31 @@ namespace S3RabbitMongo.MassTransit
         public void HandleWorkItem(Message message)
         {
             _logger.LogInformation("Message received: {@Message}", message);
-            string messageData = message.MessageData;
-            var jsonConvert = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(messageData);
-            foreach (string key in jsonConvert.Keys)
+            foreach (IWorker<Message> worker in _workers)
             {
-                using (var memStream = new MemoryStream())
-                using (var writer = new StreamWriter(memStream))
+                if (worker.Accepts(message))
                 {
-                    writer.Write(messageData);
-                    writer.Flush();
-                    _documentStore.AddDocument(new Document(message.RunId, Guid.NewGuid().ToString(), messageData));
-                    _datastore.StoreFile("test", $"{message.RunId}/{key}", memStream);
-                }
-                JsonElement val = jsonConvert[key];
-                if (val.ValueKind == JsonValueKind.Object)
-                {
-                    AddWorkItem(new Message
-                    {
-                        RunId = message.RunId,
-                        Bucket = message.Bucket,
-                        Key = message.Key,
-                        ResultBucket = message.ResultBucket,
-                        MessageData = JsonSerializer.Serialize(val),
-                        IsCreated = true
-                    });
-                }
-                else
-                {
-                    _logger.LogInformation("Message received: {@Key}:{@Value}", key, val);
+                    worker.Process(message);
                 }
             }
         }
 
         public void AddWorkItem(Message workItem)
         {
+            using (var memStream = new MemoryStream())
+            using (var writer = new StreamWriter(memStream))
+            {
+                writer.Write(workItem.MessageData);
+                writer.Flush();
+                _documentStore.AddDocument(new Document<string, string>(workItem.RunId, Guid.NewGuid().ToString(), workItem.MessageData, null));
+                _datastore.StoreFile("test", $"{workItem.RunId}/{workItem.Key}", memStream);
+            }
+            
             _jobManager.AddTask(workItem.RunId, null);
-            _bus.Publish(workItem);
+            _bus.Publish(workItem, ctx =>
+            {
+                ctx.SetPriority(2);
+            });
         }
     }
 }

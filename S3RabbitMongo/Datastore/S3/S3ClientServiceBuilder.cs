@@ -1,13 +1,13 @@
 ﻿using Amazon;
-using Amazon.Extensions.NETCore.Setup;
-using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using S3RabbitMongo.Configuration;
+using S3RabbitMongo.Configuration.Datastore.S3;
 using S3RabbitMongo.Configuration.Interfaces;
 
-namespace S3RabbitMongo.Configuration.Datastore.S3;
+namespace S3RabbitMongo.Datastore.S3;
 
 [ServiceConfiguration(ServiceName = "S3")]
 public class S3ClientServiceBuilder: ExternalServiceBuilder

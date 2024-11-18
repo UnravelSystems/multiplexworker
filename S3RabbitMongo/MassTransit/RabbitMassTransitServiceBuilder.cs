@@ -45,7 +45,9 @@ public class RabbitMassTransitServiceBuilder : ExternalServiceBuilder
                     configureEndpoint.Consumer<MessageConsumer>(context);
                     if (configureEndpoint is IRabbitMqReceiveEndpointConfigurator r)
                     {
+                        r.EnablePriority(2);
                         r.Durable = true;
+                        r.ConcurrentMessageLimit = 1;
                     }
                 });
                 
@@ -54,10 +56,10 @@ public class RabbitMassTransitServiceBuilder : ExternalServiceBuilder
                     configureEndpoint.Consumer<FaultConsumer>(context);
                     if (configureEndpoint is IRabbitMqReceiveEndpointConfigurator r)
                     {
+                        r.EnablePriority(2);
                         r.Durable = true;
                     }
                 });
-                //cfg.ConfigureEndpoints(context);
             });
         });
                        

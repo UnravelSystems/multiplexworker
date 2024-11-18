@@ -1,7 +1,7 @@
 ﻿namespace S3RabbitMongo.MassTransit;
 
-public interface IWorkerManager
+public interface IWorkerManager<T>
 {
-    public void AddWorkItem(Message workItem);
-    public void HandleWorkItem(Message workItem);
+    public void AddWorkItem(T workItem);
+    public void HandleWorkItem(T workItem);
 }

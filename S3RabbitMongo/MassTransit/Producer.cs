@@ -24,9 +24,12 @@ public class Producer : BackgroundService
                 Key = "Key",
                 ResultBucket = "ResultBucket",
                 MessageData = dict
+            }, ctx =>
+            {
+                ctx.SetPriority(1);
             }, stoppingToken);
             
-            await Task.Delay(1000, stoppingToken);
+            await Task.Delay(100000000, stoppingToken);
         }
     }
 }

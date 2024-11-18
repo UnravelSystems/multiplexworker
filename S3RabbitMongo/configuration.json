@@ -46,13 +46,18 @@
       "serviceName": "mass_transit",
       "serviceType": "rabbit",
       "options": {
-        "host": "test",
+        "host": "localhost",
         "username": "admin",
         "password": "password",
         "inqueue": "in",
         "faultqueue": "fault",
         "outqueue": "out"
       }
+    }
+  ],
+  "workers": [
+    {
+      "workerName": "NodeWorker"
     }
   ]
 }

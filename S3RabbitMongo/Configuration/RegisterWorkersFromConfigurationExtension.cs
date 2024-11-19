@@ -54,9 +54,9 @@ public static class RegisterWorkersFromConfigurationExtension
                 {
                     foreach (Type interfaceType in serviceType.GetInterfaces())
                     {
-                        serviceCollection.AddSingleton(interfaceType, serviceType);
+                        serviceCollection.AddTransient(interfaceType, serviceType);
                     }
-                    serviceCollection.AddSingleton(curType, serviceType);
+                    serviceCollection.AddTransient(curType, serviceType);
                     curType = serviceType.BaseType;
                 } while (curType != null && curType != typeof(Object));
             }

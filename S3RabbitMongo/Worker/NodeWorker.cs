@@ -6,51 +6,44 @@ using S3RabbitMongo.MassTransit;
 namespace S3RabbitMongo.Worker;
 
 [Worker(WorkerName = "NodeWorker")]
-public class NodeWorker : IFileWorker<Message>
+public class NodeWorker : IFileWorker<Message<Metadata, MessageData>>
 {
     private readonly ILogger<NodeWorker> _logger;
-    private IWorkerManager<Message> _workerManager;
+    private IWorkerManager<Message<Metadata, MessageData>> _workerManager;
     public NodeWorker(ILogger<NodeWorker> logger)
     {
         _logger = logger;
     }
 
-    public void SetWorkerManager(IWorkerManager<Message> manager)
+    public void SetWorkerManager(IWorkerManager<Message<Metadata, MessageData>> manager)
     {
-        this._workerManager = manager;
+        _workerManager = manager;
     }
 
-    public bool Accepts(Message request)
+    public bool Accepts(Message<Metadata, MessageData> request)
     {
         return true;
     }
 
-    public void Process(Message request)
+    public void Process(Message<Metadata, MessageData> request)
     {
-        var jsonConvert = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(request.MessageData);
-        foreach (string key in jsonConvert.Keys)
+        var jsonConvert = request.Data.Root;
+        foreach (TreeNode<string> child in jsonConvert.Children)
         {
-            JsonElement val = jsonConvert[key];
-            if (val.ValueKind == JsonValueKind.Object)
+            _workerManager.AddWorkItem(new Message<Metadata, MessageData>
             {
-                _workerManager.AddWorkItem(new Message
+                JobId = request.JobId,
+                Metadata = request.Metadata,
+                Data = new MessageData()
                 {
-                    RunId = request.RunId,
-                    Bucket = request.Bucket,
-                    Key = request.Key,
-                    ResultBucket = request.ResultBucket,
-                    MessageData = JsonSerializer.Serialize(val),
-                    IsCreated = true
-                });
-            }
-            else
-            {
-                _logger.LogInformation("Message received: {@Key}:{@Value}", key, val);
-            }
+                    Root = child
+                },
+                IsCreated = true
+            });
         }
     }
 
-    public void ProcessFile(Message file)
+    public void ProcessFile(Message<Metadata, MessageData> file)
     {
         throw new NotImplementedException();
     }

@@ -1,15 +1,35 @@
 ﻿{
-  "1a": {
-    "2a": {
-      "3a": {
-        "4a": 1
-      },
-      "3b": {
-        "4b": 1
-      }
+  "value": "Root",
+  "children": [
+    {
+      "value": "Child 1",
+      "children": [
+        {
+          "value": "Grandchild 1.1",
+          "children": [
+            {
+              "value": "Great Grandchild 1.1.1"
+            },
+            {
+              "value": "Great Grandchild 1.1.2"
+            }
+          ]
+        },
+        {
+          "value": "Grandchild 1.2"
+        }
+      ]
     },
-    "2b": {
-      "3b": 1
+    {
+      "value": "Child 2",
+      "children": [
+        {
+          "value": "Grandchild 2.1"
+        },
+        {
+          "value": "Grandchild 2.2"
+        }
+      ]
     }
-  }
+  ]
 }

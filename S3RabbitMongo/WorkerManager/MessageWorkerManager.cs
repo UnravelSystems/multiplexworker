@@ -1,4 +1,4 @@
-﻿using MassTransit;
+﻿/*using MassTransit;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using S3RabbitMongo.Configuration;
@@ -37,11 +37,11 @@ public class MessageWorkerManager : IWorkerManager<Message>
         {
             writer.Write(workItem.MessageData);
             writer.Flush();
-            _documentStore.AddDocument(new Document<string, string>(workItem.RunId, Guid.NewGuid().ToString(), workItem.MessageData, null));
-            _datastore.StoreFile("test", $"{workItem.RunId}/{workItem.Key}", memStream);
+            _documentStore.AddDocument(new Document<string, string>(workItem.JobId, Guid.NewGuid().ToString(), workItem.MessageData, null));
+            _datastore.StoreFile("test", $"{workItem.JobId}/{workItem.Key}", memStream);
         }
             
-        _jobManager.AddTask(workItem.RunId, null);
+        _jobManager.AddTask(workItem.JobId, null);
         _bus.Publish(workItem, ctx =>
         {
             ctx.SetPriority(2);
@@ -59,4 +59,4 @@ public class MessageWorkerManager : IWorkerManager<Message>
             }
         }
     }
-}
+}*/

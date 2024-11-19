@@ -1,4 +1,5 @@
-﻿using MassTransit;
+﻿using System.Text.Json.Serialization;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -23,6 +24,7 @@ public class RabbitMassTransitServiceBuilder : ExternalServiceBuilder
             }
             
             RabbitMQWorkerOptions rabbitOptions = options.Value;
+            x.AddSingleton<IWorkerManager<Message<Metadata, MessageData>>, MessageConsumer>();
             x.AddConsumer<MessageConsumer>().Endpoint(e =>
             {
                 e.Name = rabbitOptions.InQueue;
@@ -40,6 +42,13 @@ public class RabbitMassTransitServiceBuilder : ExternalServiceBuilder
                     h.Password(rabbitOptions.Password);
                 });
                 
+                //cfg.UseJsonSerializer();
+                cfg.ConfigureJsonSerializerOptions(jsonOptions =>
+                {
+                    jsonOptions.IncludeFields = true;
+                    jsonOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                    return jsonOptions;
+                });
                 ((IReceiveConfigurator)cfg).ReceiveEndpoint(rabbitOptions.InQueue, configureEndpoint =>
                 {
                     configureEndpoint.Consumer<MessageConsumer>(context);

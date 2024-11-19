@@ -1,4 +1,5 @@
-﻿using MassTransit;
+﻿using System.Text.Json;
+using MassTransit;
 using Microsoft.Extensions.Hosting;
 
 namespace S3RabbitMongo.MassTransit;
@@ -15,16 +16,24 @@ public class Producer : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var dict = await File.ReadAllTextAsync(@"D:\Development\multiplexworker\S3RabbitMongo\data.json", stoppingToken);
+        var data = JsonSerializer.Deserialize<TreeNode<string>>(dict);
         while (!stoppingToken.IsCancellationRequested)
         {
-            await _bus.Publish(new Message()
-            {
-                RunId = Guid.NewGuid().ToString(),
-                Bucket = "Bucket",
-                Key = "Key",
-                ResultBucket = "ResultBucket",
-                MessageData = dict
-            }, ctx =>
+            var message = new Message<Metadata, MessageData>
+                {
+                JobId = Guid.NewGuid().ToString(),
+                Metadata = new Metadata
+                {
+                    Bucket = "Bucket",
+                    Key = "Key",
+                    ResultBucket = "ResultBucket"
+                },
+                Data = new MessageData
+                {
+                    Root = data
+                }
+            };
+            await _bus.Publish<Message<Metadata, MessageData>>(message, ctx =>
             {
                 ctx.SetPriority(1);
             }, stoppingToken);

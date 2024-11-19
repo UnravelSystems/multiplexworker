@@ -1,6 +1,8 @@
 ﻿using MongoDB.Bson;
 using S3RabbitMongo.Database.Mongo;
 using S3RabbitMongo.MassTransit;
+using S3RabbitMongo.Models.S3;
+using S3RabbitMongo.Models.Tree;
 
 namespace S3RabbitMongo.Models.Mongo;
 

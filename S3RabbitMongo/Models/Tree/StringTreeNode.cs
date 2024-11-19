@@ -1,8 +1,10 @@
 ﻿using System.Text.Json.Serialization;
-using S3RabbitMongo.MassTransit;
 
-namespace S3RabbitMongo.Models;
+namespace S3RabbitMongo.Models.Tree;
 
+/// <summary>
+/// Test class for testing tree traversal and job completion
+/// </summary>
 public class StringTreeNode
 {
     [JsonPropertyName("value")] 

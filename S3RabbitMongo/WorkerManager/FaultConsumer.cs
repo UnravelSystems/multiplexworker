@@ -1,9 +1,15 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
 using S3RabbitMongo.Job;
+using S3RabbitMongo.MassTransit;
+using S3RabbitMongo.Models;
+using S3RabbitMongo.Models.S3;
 
-namespace S3RabbitMongo.MassTransit;
+namespace S3RabbitMongo.WorkerManager;
 
+/// <summary>
+/// A fault consumer, this gets triggered when the main consumer critically fails
+/// </summary>
 public class FaultConsumer : IConsumer<Fault<WorkRequest<Metadata, MessageData>>>
 {
     readonly ILogger<MessageConsumer> _logger;

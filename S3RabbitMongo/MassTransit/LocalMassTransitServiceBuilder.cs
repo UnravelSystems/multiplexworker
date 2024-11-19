@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using S3RabbitMongo.Configuration;
 using S3RabbitMongo.Configuration.Interfaces;
+using S3RabbitMongo.WorkerManager;
 
 namespace S3RabbitMongo.MassTransit;
 

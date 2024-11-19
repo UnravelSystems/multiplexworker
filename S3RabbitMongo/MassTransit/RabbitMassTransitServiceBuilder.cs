@@ -6,6 +6,9 @@ using Microsoft.Extensions.Options;
 using S3RabbitMongo.Configuration;
 using S3RabbitMongo.Configuration.Interfaces;
 using S3RabbitMongo.Configuration.ServiceBus;
+using S3RabbitMongo.Models;
+using S3RabbitMongo.Models.S3;
+using S3RabbitMongo.WorkerManager;
 
 namespace S3RabbitMongo.MassTransit;
 

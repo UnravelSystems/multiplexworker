@@ -1,16 +1,16 @@
-﻿using System.Text.Json;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.Extensions.Logging;
-using S3RabbitMongo.Configuration.Database.External;
-using S3RabbitMongo.Configuration.Datastore;
 using S3RabbitMongo.Database;
 using S3RabbitMongo.Database.Mongo;
 using S3RabbitMongo.Datastore;
 using S3RabbitMongo.Job;
+using S3RabbitMongo.MassTransit;
 using S3RabbitMongo.Models;
+using S3RabbitMongo.Models.S3;
+using S3RabbitMongo.Models.Tree;
 using S3RabbitMongo.Worker;
 
-namespace S3RabbitMongo.MassTransit
+namespace S3RabbitMongo.WorkerManager
 {
     public class MessageData
     {
@@ -19,9 +19,11 @@ namespace S3RabbitMongo.MassTransit
 
     public class RabbitWorkRequest : WorkRequest<Metadata, MessageData>
     {
-        
     }
 
+    /// <summary>
+    /// Consumer and worker manager for a basic work request containing metadata and a tree
+    /// </summary>
     public class MessageConsumer : IConsumer<WorkRequest<Metadata, MessageData>>,
         IWorkerManager<WorkRequest<Metadata, MessageData>>
     {
@@ -97,7 +99,7 @@ namespace S3RabbitMongo.MassTransit
                         workItem.Data.Root,
                         workItem.Metadata)
                 );
-                _datastore.StoreFile("test", $"{workItem.JobId}/{workItem.Metadata.Key}", memStream);
+                _datastore.StoreFile("test", $"{workItem.JobId}/{workItem.Data.Root.Value}", memStream);
             }
 
             StringTreeNode? node = workItem.Data.Root;

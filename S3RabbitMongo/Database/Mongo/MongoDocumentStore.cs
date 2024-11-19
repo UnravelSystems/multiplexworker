@@ -7,6 +7,7 @@ using S3RabbitMongo.Configuration.Database.External;
 using S3RabbitMongo.MassTransit;
 using S3RabbitMongo.Models;
 using S3RabbitMongo.Models.Mongo;
+using S3RabbitMongo.Models.Tree;
 
 namespace S3RabbitMongo.Database.Mongo
 {

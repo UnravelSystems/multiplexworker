@@ -3,9 +3,15 @@ using Microsoft.Extensions.Logging;
 using S3RabbitMongo.Configuration;
 using S3RabbitMongo.MassTransit;
 using S3RabbitMongo.Models;
+using S3RabbitMongo.Models.S3;
+using S3RabbitMongo.Models.Tree;
+using S3RabbitMongo.WorkerManager;
 
 namespace S3RabbitMongo.Worker;
 
+/// <summary>
+/// Simple worker for handling tree nodes, this is used for testing the system
+/// </summary>
 [Worker(WorkerName = "NodeWorker")]
 public class NodeWorker : IFileWorker<WorkRequest<Metadata, MessageData>>
 {
@@ -16,9 +22,9 @@ public class NodeWorker : IFileWorker<WorkRequest<Metadata, MessageData>>
         _logger = logger;
     }
 
-    public void SetWorkerManager(IWorkerManager<WorkRequest<Metadata, MessageData>> manager)
+    public void SetWorkerManager(IWorkerManager manager)
     {
-        _workerManager = manager;
+        _workerManager = (IWorkerManager<WorkRequest<Metadata, MessageData>>)manager;
     }
 
     public bool Accepts(WorkRequest<Metadata, MessageData> request)

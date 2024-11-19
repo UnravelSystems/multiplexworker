@@ -3,6 +3,7 @@ using Amazon.S3.Transfer;
 using Microsoft.Extensions.Logging;
 using S3RabbitMongo.Configuration;
 using S3RabbitMongo.Configuration.Datastore;
+using S3RabbitMongo.Models.S3;
 
 namespace S3RabbitMongo.Datastore.S3;
 

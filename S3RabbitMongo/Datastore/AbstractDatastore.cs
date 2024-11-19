@@ -1,4 +1,5 @@
 ﻿using S3RabbitMongo.Configuration.Datastore;
+using S3RabbitMongo.Models.S3;
 
 namespace S3RabbitMongo.Datastore;
 

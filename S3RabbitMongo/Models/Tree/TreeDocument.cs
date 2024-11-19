@@ -1,8 +1,7 @@
 ﻿using S3RabbitMongo.MassTransit;
-using S3RabbitMongo.Models;
-using S3RabbitMongo.Models.Mongo;
+using S3RabbitMongo.Models.S3;
 
-namespace S3RabbitMongo.Database.Mongo;
+namespace S3RabbitMongo.Models.Tree;
 
 public class TreeDocument : Document<StringTreeNode, Metadata>
 {

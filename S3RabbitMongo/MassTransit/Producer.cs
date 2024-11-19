@@ -2,6 +2,9 @@
 using MassTransit;
 using Microsoft.Extensions.Hosting;
 using S3RabbitMongo.Models;
+using S3RabbitMongo.Models.S3;
+using S3RabbitMongo.Models.Tree;
+using S3RabbitMongo.WorkerManager;
 
 namespace S3RabbitMongo.MassTransit;
 
@@ -18,7 +21,8 @@ public class Producer : BackgroundService
     {
         var dict = await File.ReadAllTextAsync(@"data.json", stoppingToken);
         var data = JsonSerializer.Deserialize<StringTreeNode>(dict);
-        while (!stoppingToken.IsCancellationRequested)
+
+        for(int i = 0; i < 1; i++)
         {
             var message = new WorkRequest<Metadata, MessageData>
                 {
@@ -39,7 +43,7 @@ public class Producer : BackgroundService
                 ctx.SetPriority(1);
             }, stoppingToken);
             
-            await Task.Delay(100000000, stoppingToken);
+            //await Task.Delay(100000000, stoppingToken);
         }
     }
 }

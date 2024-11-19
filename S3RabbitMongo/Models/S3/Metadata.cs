@@ -1,4 +1,4 @@
-﻿namespace S3RabbitMongo.MassTransit;
+﻿namespace S3RabbitMongo.Models.S3;
 
 public class Metadata
 {

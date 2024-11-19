@@ -4,7 +4,7 @@ using S3RabbitMongo.Configuration;
 
 namespace S3RabbitMongo.Job;
 
-[ServiceConfiguration(ServiceType = "local", ServiceName = "job_manager", ServiceInterface = typeof(IJobManager))]
+[ServiceConfiguration(ServiceType = "local", ServiceName = "job_manager")]
 public class LocalJobManager : IJobManager
 {
     private ConcurrentDictionary<string, long> _jobs;

@@ -27,7 +27,7 @@
       - 9000:9000
       - 9001:9001
     volumes:
-      - 'D:\minio_data:/data'
+      - 'C:\minio_data:/data'
     environment:
       MINIO_ROOT_USER: "admin"
       MINIO_ROOT_PASSWORD: "password"

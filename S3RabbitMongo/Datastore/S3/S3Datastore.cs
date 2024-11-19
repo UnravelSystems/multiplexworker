@@ -6,7 +6,7 @@ using S3RabbitMongo.Configuration.Datastore;
 
 namespace S3RabbitMongo.Datastore.S3;
 
-[ServiceConfiguration(ServiceType = "S3", ServiceName = "datastore", ServiceInterface = typeof(IDatastore))]
+[ServiceConfiguration(ServiceType = "S3", ServiceName = "datastore")]
 public class S3Datastore : AbstractDatastore
 {
     private readonly ILogger<S3Datastore> _logger;

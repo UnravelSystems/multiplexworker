@@ -27,4 +27,16 @@
       <PackageReference Include="YamlDotNet" Version="16.1.3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="configuration.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="configuration.local.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="data.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

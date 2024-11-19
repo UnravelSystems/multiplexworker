@@ -4,7 +4,7 @@ using S3RabbitMongo.Job;
 
 namespace S3RabbitMongo.MassTransit;
 
-public class FaultConsumer : IConsumer<Fault<Message<Metadata, MessageData>>>
+public class FaultConsumer : IConsumer<Fault<WorkRequest<Metadata, MessageData>>>
 {
     readonly ILogger<MessageConsumer> _logger;
     readonly IJobManager _jobManager;
@@ -15,14 +15,14 @@ public class FaultConsumer : IConsumer<Fault<Message<Metadata, MessageData>>>
         _jobManager = jobManager;
     }
     
-    public async Task Consume(ConsumeContext<Fault<Message<Metadata, MessageData>>> context)
+    public async Task Consume(ConsumeContext<Fault<WorkRequest<Metadata, MessageData>>> context)
     {
         _logger.LogInformation("Fault consumer received: {@context}", context);
-        Message<Metadata, MessageData> message = context.Message.Message;
-        long activeJobs = _jobManager.RemoveTask(message.JobId, null);
-        if (_jobManager.IsJobFinished(message.JobId))
+        WorkRequest<Metadata, MessageData> workRequest = context.Message.Message;
+        long activeJobs = _jobManager.RemoveTask(workRequest.JobId, null);
+        if (_jobManager.IsJobFinished(workRequest.JobId))
         {
-            _logger.LogInformation($"Job {message.JobId} has finished through fault: {_jobManager.FinishJob(message.JobId)}");
+            _logger.LogInformation($"Job {workRequest.JobId} has finished through fault: {_jobManager.FinishJob(workRequest.JobId)}");
         }
     }
 }

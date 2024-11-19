@@ -24,7 +24,7 @@ public class RabbitMassTransitServiceBuilder : ExternalServiceBuilder
             }
             
             RabbitMQWorkerOptions rabbitOptions = options.Value;
-            x.AddSingleton<IWorkerManager<Message<Metadata, MessageData>>, MessageConsumer>();
+            x.AddSingleton<IWorkerManager<WorkRequest<Metadata, MessageData>>, MessageConsumer>();
             x.AddConsumer<MessageConsumer>().Endpoint(e =>
             {
                 e.Name = rabbitOptions.InQueue;

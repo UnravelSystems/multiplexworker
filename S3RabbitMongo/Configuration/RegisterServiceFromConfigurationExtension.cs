@@ -36,12 +36,6 @@ public static class RegisterServiceFromConfigurationExtension
         }
     }
 
-    static Type? GetInterfaceType(Type serviceType)
-    {
-        ServiceConfigurationAttribute attribute = (ServiceConfigurationAttribute)serviceType.GetCustomAttribute(typeof(ServiceConfigurationAttribute))!;
-        return attribute.ServiceInterface;
-    }
-
     static ServiceLifetime GetServiceScope(Type serviceType)
     {
         ServiceConfigurationAttribute attribute = (ServiceConfigurationAttribute)serviceType.GetCustomAttribute(typeof(ServiceConfigurationAttribute))!;
@@ -79,8 +73,7 @@ public static class RegisterServiceFromConfigurationExtension
                 else
                 {
                     // Simple service
-                    Type? interfaceType = GetInterfaceType(serviceType);
-                    RegisterService(serviceCollection, serviceType, interfaceType, GetServiceScope(serviceType));
+                    RegisterService(serviceCollection, serviceType, GetServiceScope(serviceType));
                 }
             }
             catch (Exception e)
@@ -94,17 +87,9 @@ public static class RegisterServiceFromConfigurationExtension
         return serviceCollection;
     }
 
-    private static void RegisterService(IServiceCollection serviceCollection, Type serviceType, Type? interfaceType, ServiceLifetime scope)
+    private static void RegisterService(IServiceCollection serviceCollection, Type serviceType, ServiceLifetime scope)
     {
-        Type[] interfaces;
-        if (interfaceType == null)
-        {
-            interfaces = serviceType.GetInterfaces();
-        }
-        else
-        {
-            interfaces = [interfaceType];
-        }
+        Type[] interfaces = serviceType.GetInterfaces();
 
         foreach (Type @interface in interfaces)
         {

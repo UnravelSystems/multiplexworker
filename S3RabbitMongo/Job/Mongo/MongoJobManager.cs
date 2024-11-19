@@ -20,7 +20,7 @@ namespace S3RabbitMongo.Job
         public DateTime StartTime { get; set; }
     }
     
-    [ServiceConfiguration(ServiceType = "mongo", ServiceName = "job_manager", ServiceInterface = typeof(IJobManager))]
+    [ServiceConfiguration(ServiceType = "mongo", ServiceName = "job_manager")]
     public class MongoJobManager : IJobManager
     {
         private readonly ILogger<MongoJobManager> _logger;

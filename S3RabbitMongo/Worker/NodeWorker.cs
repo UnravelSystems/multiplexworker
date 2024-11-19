@@ -2,35 +2,36 @@
 using Microsoft.Extensions.Logging;
 using S3RabbitMongo.Configuration;
 using S3RabbitMongo.MassTransit;
+using S3RabbitMongo.Models;
 
 namespace S3RabbitMongo.Worker;
 
 [Worker(WorkerName = "NodeWorker")]
-public class NodeWorker : IFileWorker<Message<Metadata, MessageData>>
+public class NodeWorker : IFileWorker<WorkRequest<Metadata, MessageData>>
 {
     private readonly ILogger<NodeWorker> _logger;
-    private IWorkerManager<Message<Metadata, MessageData>> _workerManager;
+    private IWorkerManager<WorkRequest<Metadata, MessageData>> _workerManager;
     public NodeWorker(ILogger<NodeWorker> logger)
     {
         _logger = logger;
     }
 
-    public void SetWorkerManager(IWorkerManager<Message<Metadata, MessageData>> manager)
+    public void SetWorkerManager(IWorkerManager<WorkRequest<Metadata, MessageData>> manager)
     {
         _workerManager = manager;
     }
 
-    public bool Accepts(Message<Metadata, MessageData> request)
+    public bool Accepts(WorkRequest<Metadata, MessageData> request)
     {
         return true;
     }
 
-    public void Process(Message<Metadata, MessageData> request)
+    public void Process(WorkRequest<Metadata, MessageData> request)
     {
         var jsonConvert = request.Data.Root;
-        foreach (TreeNode<string> child in jsonConvert.Children)
+        foreach (StringTreeNode child in jsonConvert.Children)
         {
-            _workerManager.AddWorkItem(new Message<Metadata, MessageData>
+            _workerManager.AddWorkItem(new WorkRequest<Metadata, MessageData>
             {
                 JobId = request.JobId,
                 Metadata = request.Metadata,
@@ -43,7 +44,7 @@ public class NodeWorker : IFileWorker<Message<Metadata, MessageData>>
         }
     }
 
-    public void ProcessFile(Message<Metadata, MessageData> file)
+    public void ProcessFile(WorkRequest<Metadata, MessageData> file)
     {
         throw new NotImplementedException();
     }

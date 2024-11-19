@@ -1,10 +1,11 @@
 ﻿using S3RabbitMongo.Configuration;
 using S3RabbitMongo.Configuration.Database.External;
 using S3RabbitMongo.Database.Mongo;
+using S3RabbitMongo.Models;
 
 namespace S3RabbitMongo.Database;
 
-[ServiceConfiguration(ServiceName = "document_store", ServiceType = "local", ServiceInterface = typeof(IDocumentStore<Document<string, string>>))]
+[ServiceConfiguration(ServiceName = "document_store", ServiceType = "local")]
 public class LocalDocumentStore : IDocumentStore<Document<string, string>>
 {
     public void AddDocument(string collectionName, Document<string, string> document)
